@@ -81,6 +81,17 @@ tmp/
 
 
 # ================================
+# Prisma
+# ================================
+
+# Generated Prisma Client
+/generated/prisma/
+
+# Prisma debug logs
+prisma-debug.log*
+
+
+# ================================
 # Editor / IDE
 # ================================
 
@@ -119,5 +130,3 @@ desktop.ini
 *.pid
 *.seed
 *.pid.lock
-
-/generated/prisma
