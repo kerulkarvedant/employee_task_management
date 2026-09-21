@@ -44,14 +44,17 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const userId = await createUser(
+    const user = await createUser(
       name,
       email,
       hashedPassword
     );
 
     // Generate JWT
-    const token = generateToken(userId, email);
+    const token = generateToken(
+      user.id,
+      user.email
+    );
 
     // Store JWT in HTTP-only cookie
     res.cookie("token", token, {
@@ -64,9 +67,9 @@ export const register = async (req, res) => {
     res.status(201).json({
       message: "Registration successful",
       user: {
-        id: userId,
-        name,
-        email,
+        id: user.id,
+        name: user.name,
+        email: user.email,
       },
     });
   } catch (error) {
