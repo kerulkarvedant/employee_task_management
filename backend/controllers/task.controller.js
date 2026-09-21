@@ -17,7 +17,7 @@ export const createTask = async (req, res) => {
       due_date,
     } = req.body;
 
-    if (!title) {
+    if (!title || !title.trim()) {
       return res.status(400).json({
         message: "Title is required",
       });
@@ -26,10 +26,10 @@ export const createTask = async (req, res) => {
     const taskStatus = status || "pending";
     const taskPriority = priority || "medium";
     const taskDueDate = due_date || null;
-    const taskDescription = description || null;
+    const taskDescription = description?.trim() || null;
 
     const task = await createTaskModel({
-      title,
+      title: title.trim(),
       description: taskDescription,
       status: taskStatus,
       priority: taskPriority,
@@ -45,9 +45,9 @@ export const createTask = async (req, res) => {
         description: task.description,
         status: task.status,
         priority: task.priority,
-        due_date: task.dueDate,
-        user_id: task.userId,
-        created_at: task.createdAt,
+        dueDate: task.dueDate,
+        userId: task.userId,
+        createdAt: task.createdAt,
       },
     });
   } catch (error) {

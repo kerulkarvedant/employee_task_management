@@ -15,7 +15,7 @@ export const createTaskModel = async ({
       description,
       status,
       priority,
-      dueDate: due_date,
+      dueDate: due_date ? new Date(due_date) : null,
       userId: Number(user_id),
     },
   });
@@ -65,7 +65,7 @@ export const updateTaskModel = async (
       description,
       status,
       priority,
-      dueDate: due_date,
+      dueDate: due_date ? new Date(due_date) : null,
     },
   });
 };
