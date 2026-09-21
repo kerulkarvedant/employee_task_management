@@ -1,6 +1,11 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { db } from "../config/db.js";
+
+import {
+  findUserByEmail,
+  findUserById,
+  createUser,
+} from "../models/user.model.js";
 
 const generateToken = (userId, email) => {
   return jwt.sign(
@@ -26,26 +31,29 @@ export const register = async (req, res) => {
       });
     }
 
-    const [existingUser] = await db.query(
-      "SELECT id FROM users WHERE email = ?",
-      [email]
-    );
+    // Check if user already exists
+    const existingUser = await findUserByEmail(email);
 
-    if (existingUser.length > 0) {
+    if (existingUser) {
       return res.status(409).json({
         message: "User already exists",
       });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const [result] = await db.query(
-      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, hashedPassword]
+    // Create user
+    const userId = await createUser(
+      name,
+      email,
+      hashedPassword
     );
 
-    const token = generateToken(result.insertId, email);
+    // Generate JWT
+    const token = generateToken(userId, email);
 
+    // Store JWT in HTTP-only cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -56,7 +64,7 @@ export const register = async (req, res) => {
     res.status(201).json({
       message: "Registration successful",
       user: {
-        id: result.insertId,
+        id: userId,
         name,
         email,
       },
@@ -81,19 +89,16 @@ export const login = async (req, res) => {
       });
     }
 
-    const [users] = await db.query(
-      "SELECT * FROM users WHERE email = ?",
-      [email]
-    );
+    // Find user by email
+    const user = await findUserByEmail(email);
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(401).json({
         message: "Invalid email or password",
       });
     }
 
-    const user = users[0];
-
+    // Compare password
     const isPasswordValid = await bcrypt.compare(
       password,
       user.password
@@ -105,8 +110,13 @@ export const login = async (req, res) => {
       });
     }
 
-    const token = generateToken(user.id, user.email);
+    // Generate JWT
+    const token = generateToken(
+      user.id,
+      user.email
+    );
 
+    // Store JWT in HTTP-only cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -143,19 +153,16 @@ export const logout = (req, res) => {
 // Get current user
 export const getMe = async (req, res) => {
   try {
-    const [users] = await db.query(
-      "SELECT id, name, email, created_at FROM users WHERE id = ?",
-      [req.userId]
-    );
+    const user = await findUserById(req.userId);
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(404).json({
         message: "User not found",
       });
     }
 
     res.status(200).json({
-      user: users[0],
+      user,
     });
   } catch (error) {
     console.error("Get user error:", error);
