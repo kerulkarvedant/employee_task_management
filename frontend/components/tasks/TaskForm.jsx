@@ -28,7 +28,9 @@ const TaskForm = ({
         status: initialData.status || "pending",
         priority: initialData.priority || "medium",
         due_date: initialData.dueDate
-          ? new Date(initialData.dueDate).toISOString().split("T")[0]
+          ? new Date(initialData.dueDate)
+              .toISOString()
+              .split("T")[0]
           : "",
       });
     } else {
@@ -36,6 +38,7 @@ const TaskForm = ({
     }
   }, [initialData]);
 
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -45,6 +48,7 @@ const TaskForm = ({
     }));
   };
 
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -63,7 +67,10 @@ const TaskForm = ({
   const isEditMode = mode === "edit";
 
   return (
-    <form onSubmit={handleSubmit} className="w-full space-y-5">
+    <form
+      onSubmit={handleSubmit}
+      className="w-full space-y-5"
+    >
       {/* Title */}
       <div>
         <label
@@ -172,7 +179,7 @@ const TaskForm = ({
           value={formData.due_date}
           onChange={handleChange}
           disabled={loading}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50"
         />
 
         <p className="mt-2 text-xs text-slate-400">
@@ -182,15 +189,17 @@ const TaskForm = ({
 
       {/* Buttons */}
       <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+        {/* Cancel */}
         <button
           type="button"
           onClick={onCancel}
           disabled={loading}
-          className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           Cancel
         </button>
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}

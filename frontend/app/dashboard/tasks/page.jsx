@@ -13,6 +13,8 @@ import TaskForm from "../../../components/tasks/TaskForm";
 import {
   createTask,
   getTasks,
+  updateTask,
+  deleteTask,
 } from "../../../services/task.service";
 
 function TasksContent({ user }) {
@@ -22,9 +24,13 @@ function TasksContent({ user }) {
 
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [error, setError] = useState("");
+
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
 
   // Fetch Tasks
   const fetchTasks = async () => {
@@ -71,14 +77,81 @@ function TasksContent({ user }) {
     }
   };
 
-  // Edit Task
+  // Open Edit Form
   const handleEdit = (task) => {
-    console.log("Edit task:", task);
+    setError("");
+    setShowCreateForm(false);
+    setEditingTask(task);
+  };
+
+  // Update Task
+  const handleUpdateTask = async (taskData) => {
+    try {
+      setUpdating(true);
+      setError("");
+
+      await updateTask(editingTask.id, taskData);
+
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === editingTask.id
+            ? {
+                ...task,
+                title: taskData.title,
+                description: taskData.description,
+                status: taskData.status,
+                priority: taskData.priority,
+                dueDate: taskData.due_date
+                  ? new Date(taskData.due_date)
+                  : null,
+              }
+            : task
+        )
+      );
+
+      setEditingTask(null);
+    } catch (error) {
+      console.error("Update task error:", error);
+
+      setError(error.message || "Failed to update task");
+    } finally {
+      setUpdating(false);
+    }
   };
 
   // Delete Task
-  const handleDelete = (task) => {
-    console.log("Delete task:", task);
+  const handleDelete = async (task) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${task.title}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setError("");
+
+      await deleteTask(task.id);
+
+      setTasks((prevTasks) =>
+        prevTasks.filter((item) => item.id !== task.id)
+      );
+    } catch (error) {
+      console.error("Delete task error:", error);
+
+      setError(error.message || "Failed to delete task");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Cancel Form
+  const handleCancelForm = () => {
+    setShowCreateForm(false);
+    setEditingTask(null);
+    setError("");
   };
 
   return (
@@ -116,10 +189,11 @@ function TasksContent({ user }) {
                 </p>
               </div>
 
-              {!showCreateForm && (
+              {!showCreateForm && !editingTask && (
                 <button
                   onClick={() => {
                     setError("");
+                    setEditingTask(null);
                     setShowCreateForm(true);
                   }}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 sm:w-auto"
@@ -147,24 +221,30 @@ function TasksContent({ user }) {
               </div>
             )}
 
-            {/* Create Task Form */}
-            {showCreateForm && (
+            {/* Create / Edit Form */}
+            {(showCreateForm || editingTask) && (
               <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+
+                {/* Form Header */}
                 <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
-                      Create New Task
+                      {editingTask
+                        ? "Edit Task"
+                        : "Create New Task"}
                     </h2>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      Add a new task to your task list.
+                      {editingTask
+                        ? "Update the details of your task."
+                        : "Add a new task to your task list."}
                     </p>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    disabled={creating}
+                    onClick={handleCancelForm}
+                    disabled={creating || updating}
                     className="self-start rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Close form"
                   >
@@ -172,11 +252,25 @@ function TasksContent({ user }) {
                   </button>
                 </div>
 
+                {/* Task Form */}
                 <TaskForm
-                  onSubmit={handleCreateTask}
-                  onCancel={() => setShowCreateForm(false)}
-                  loading={creating}
-                  mode="create"
+                  onSubmit={
+                    editingTask
+                      ? handleUpdateTask
+                      : handleCreateTask
+                  }
+                  onCancel={handleCancelForm}
+                  loading={
+                    editingTask
+                      ? updating
+                      : creating
+                  }
+                  mode={
+                    editingTask
+                      ? "edit"
+                      : "create"
+                  }
+                  initialData={editingTask}
                 />
               </div>
             )}
@@ -193,7 +287,9 @@ function TasksContent({ user }) {
                     {loading
                       ? "Loading your tasks..."
                       : `${tasks.length} ${
-                          tasks.length === 1 ? "task" : "tasks"
+                          tasks.length === 1
+                            ? "task"
+                            : "tasks"
                         } available`}
                   </p>
                 </div>

@@ -13,23 +13,22 @@ model User {
   email     String   @unique
   password  String
   createdAt DateTime @default(now()) @map("created_at")
-
-  tasks Task[]
+  tasks     Task[]
 
   @@map("users")
 }
 
 model Task {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   title       String
   description String?
-  status      String   @default("pending")
-  priority    String   @default("medium")
+  status      String    @default("pending")
+  priority    String    @default("medium")
   dueDate     DateTime? @map("due_date")
   createdAt   DateTime  @default(now()) @map("created_at")
+  userId      Int       @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  userId Int  @map("user_id")
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "tasks_user_id_fkey")
   @@map("tasks")
 }
