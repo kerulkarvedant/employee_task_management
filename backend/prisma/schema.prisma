@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
 model User {
@@ -19,16 +19,17 @@ model User {
 }
 
 model Task {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   title       String
   description String?
-  status      String    @default("pending")
-  priority    String    @default("medium")
+  status      String   @default("pending")
+  priority    String   @default("medium")
   dueDate     DateTime? @map("due_date")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  userId      Int       @map("user_id")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+  userId      Int      @map("user_id")
 
-  @@index([userId], map: "tasks_user_id_fkey")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "tasks_user_id_idx")
   @@map("tasks")
 }
